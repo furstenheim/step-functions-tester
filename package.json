@@ -1,0 +1,9 @@
+{
+  "name": "step-functions-swiss-army-knife",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "dedent": "^0.7.0"
+  }
+}
