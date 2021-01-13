@@ -4,6 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "dedent": "^0.7.0"
+    "dedent": "^0.7.0",
+    "docker-compose": "^0.23.6"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }
