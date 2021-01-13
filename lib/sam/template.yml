@@ -1,0 +1,12 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  MockFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: mock-lambda/
+      Handler: app.lambdaHandler
+      Runtime: nodejs12.x
+      Timeout: 100
+
