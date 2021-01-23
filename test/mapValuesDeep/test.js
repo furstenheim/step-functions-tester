@@ -1,5 +1,6 @@
-/* globals describe it **/
-const mapValuesDeep = require('../../lib/mapValuesDeep')
+/* globals describe it */
+const mapValuesDeep = require('../../lib/mapValuesDeep').mapValuesDeep
+const fixStepFunction = require('../../lib/mapValuesDeep').fixStepFunction
 const _ = require('lodash')
 const { expect } = require('chai')
 describe('Map Values Deep', function () {
@@ -66,5 +67,91 @@ describe('Map Values Deep', function () {
 
   tests.forEach(t => it(t.name, function () {
     expect(mapValuesDeep(t.obj, t.callback)).deep.equal(t.expected)
+  }))
+})
+
+describe('Fix step function', function () {
+  const tests = [
+    {
+      name: 'Simple step function',
+      obj: {
+        StartAt: 'FirstStep',
+        States: {
+          FirstStep: {
+            Type: 'Task',
+            Resource: 'MyFirstLambda',
+            ResultPath: '$.firstResult',
+            Next: 'SecondStep',
+            TimeoutSeconds: 10
+          },
+          SecondStep: {
+            Type: 'Choice',
+            Choices: [
+              {
+                Variable: '$.firstResult.count',
+                NumericGreaterThan: 4,
+                Next: 'Final'
+              },
+              {
+                Variable: '$.firstResult.count',
+                NumericLessThanEquals: 4,
+                Next: 'Final'
+              }
+            ]
+          },
+          Final: {
+            Type: 'Task',
+            Resource: 'FinalLambda',
+            Parameters: {
+              SomeEndParameters: '$.firstResult.count'
+            },
+            End: true
+          }
+        }
+      },
+      expected: {
+        StartAt: 'FirstStep',
+        States: {
+          FirstStep: {
+            Next: 'SecondStep',
+            Parameters: {
+              __function_key: 'MyFirstLambda'
+            },
+            Resource: 'MockFunction',
+            ResultPath: '$.firstResult',
+            TimeoutSeconds: 5,
+            Type: 'Task'
+          },
+          SecondStep: {
+            Choices: [
+              {
+                Next: 'Final',
+                NumericGreaterThan: 4,
+                Variable: '$.firstResult.count'
+              },
+              {
+                Next: 'Final',
+                NumericLessThanEquals: 4,
+                Variable: '$.firstResult.count'
+              }
+            ],
+            Type: 'Choice'
+          },
+          Final: {
+            End: true,
+            Parameters: {
+              SomeEndParameters: '$.firstResult.count',
+              __function_key: 'FinalLambda'
+            },
+            Resource: 'MockFunction',
+            Type: 'Task'
+          }
+        }
+      }
+    }
+  ]
+
+  tests.forEach(t => it(t.name, function () {
+    expect(fixStepFunction(t.obj)).deep.equal(t.expected)
   }))
 })
