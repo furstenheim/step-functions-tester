@@ -3,11 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "test:watch": "mocha --recursive test --watch"
+  },
   "dependencies": {
     "dedent": "^0.7.0",
-    "docker-compose": "^0.23.6"
+    "docker-compose": "^0.23.6",
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1",
     "nodemon": "^2.0.7"
   }
 }
