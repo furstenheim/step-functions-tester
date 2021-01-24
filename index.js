@@ -4,6 +4,7 @@ module.exports = {
 
 const dockerCompose = require('docker-compose')
 const dockerComposeFile = require('./lib/docker-compose-file')
+const sam = require('./lib/sam')
 
 main()
   .then(function (result) {
@@ -16,7 +17,9 @@ main()
 })
 
 async function main () {
-  await setUpStepFunctions()
+  const result = await sam.runSam()
+  console.log(result)
+  //   await setUpStepFunctions()
 }
 
 async function setUpStepFunctions () {
