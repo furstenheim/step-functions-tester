@@ -109,7 +109,7 @@ class TestRunner {
     })
     const redisGet = this.redisGet
     const executions = await Promise.all(executionKeys.map(async function (key) {
-      const execution = redisGet(key)
+      const execution = await redisGet(key)
       const functionName = key.substr('executions:'.length)
       return {
         functionName,
@@ -150,6 +150,7 @@ class TestRunner {
     // TODO close docker and sam
   }
 }
+
 main()
   .then(function (result) {
     console.log(result)
@@ -164,7 +165,9 @@ async function main () {
   const testRunner = new TestRunner()
   await testRunner.setUp()
   const result = await testRunner.run(
-    {}, {
+    {
+      MyFirstLambda: [{count: 3}]
+    }, {
       StartAt: 'FirstStep',
       States: {
         FirstStep: {
@@ -193,12 +196,13 @@ async function main () {
           Type: 'Task',
           Resource: 'FinalLambda',
           Parameters: {
-            SomeEndParameters: '$.firstResult.count'
+            'SomeEndParameters.$': '$.firstResult.count'
           },
           End: true
         }
       }
     }, {})
+  await testRunner.cleanUp()
   console.log(JSON.stringify(result, null, 2))
 }
 
