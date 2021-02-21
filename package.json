@@ -7,9 +7,11 @@
     "test:watch": "mocha --recursive test --watch"
   },
   "dependencies": {
+    "aws-sdk": "^2.848.0",
     "dedent": "^0.7.0",
     "docker-compose": "^0.23.6",
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.20",
+    "redis": "^3.0.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",
