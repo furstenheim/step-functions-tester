@@ -14,16 +14,6 @@ const AWS_REGION = 'eu-west-1'
 const STEP_FUNCTION_NAME = 'testStepFunction'
 const STEP_FUNCTION_ARN = `arn:aws:states:us-east-1:123456789012:stateMachine:${STEP_FUNCTION_NAME}`
 
-main()
-  .then(function (result) {
-    console.log(result)
-    process.exit(0)
-  }, function (err) {
-    console.error('-------')
-    console.error(err)
-    process.exit(1)
-  })
-
 class TestRunner {
   async setUp () {
     await sam.runSam()
@@ -31,7 +21,11 @@ class TestRunner {
 
     this.stepFunctionClient = new AWS.StepFunctions({
       endpoint: stepFunctionEndpoint,
-      region: AWS_REGION
+      region: AWS_REGION,
+      credentials: new AWS.Credentials({
+        accessKeyId: 'dummy',
+        secretAccessKey: 'dummy'
+      })
     })
 
     const redisClient = redis.createClient()
@@ -67,10 +61,12 @@ class TestRunner {
     }
     const fixedDefinition = utils.fixStepFunction(stepFunctionDefinition)
 
+    console.log(fixedDefinition)
+
     await stepFunctionClient.createStateMachine({
       definition: JSON.stringify(fixedDefinition),
       name: STEP_FUNCTION_NAME,
-      roleArn: 'arn:aws:iam:012345678901:role/DummyRole'
+      roleArn: 'arn:aws:iam::012345678901:role/DummyRole'
     }).promise()
 
     const execution = await stepFunctionClient.startExecution({
@@ -88,7 +84,7 @@ class TestRunner {
 
     let stepFunctionResult
     while (stillRunning) {
-      stepFunctionResult = await stepFunctionClient.describeExecution({ executionArn: execution.executionArn}).promise()
+      stepFunctionResult = await stepFunctionClient.describeExecution({ executionArn: execution.executionArn }).promise()
       if (stepFunctionResult.status === 'RUNNING') {
         await utils.waitFor(executionInterval)
       } else {
@@ -100,7 +96,7 @@ class TestRunner {
       throw executionError
     }
 
-    const executionHistory = await stepFunctionClient.getExecutionHistory({executionArn: execution.executionArn}).promise()
+    const executionHistory = await stepFunctionClient.getExecutionHistory({ executionArn: execution.executionArn }).promise()
 
     const redisClient = this.redisClient
     const executionKeys = await new Promise(function (resolve, reject) {
@@ -154,13 +150,56 @@ class TestRunner {
     // TODO close docker and sam
   }
 }
+main()
+  .then(function (result) {
+    console.log(result)
+    process.exit(0)
+  }, function (err) {
+    console.error('-------')
+    console.error(err)
+    process.exit(1)
+  })
 
 async function main () {
   const testRunner = new TestRunner()
   await testRunner.setUp()
-  const result = testRunner.run(
-    {},
-  )
+  const result = await testRunner.run(
+    {}, {
+      StartAt: 'FirstStep',
+      States: {
+        FirstStep: {
+          Type: 'Task',
+          Resource: 'MyFirstLambda',
+          ResultPath: '$.firstResult',
+          Next: 'SecondStep',
+          TimeoutSeconds: 10
+        },
+        SecondStep: {
+          Type: 'Choice',
+          Choices: [
+            {
+              Variable: '$.firstResult.count',
+              NumericGreaterThan: 4,
+              Next: 'Final'
+            },
+            {
+              Variable: '$.firstResult.count',
+              NumericLessThanEquals: 4,
+              Next: 'Final'
+            }
+          ]
+        },
+        Final: {
+          Type: 'Task',
+          Resource: 'FinalLambda',
+          Parameters: {
+            SomeEndParameters: '$.firstResult.count'
+          },
+          End: true
+        }
+      }
+    }, {})
+  console.log(JSON.stringify(result, null, 2))
 }
 
 /**
