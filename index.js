@@ -46,6 +46,20 @@ class TestRunner {
     this.redisSet = async function (key, obj) {
       return promisifiedSet(key, JSON.stringify(obj))
     }
+
+    const lambdaClient = new AWS.Lambda({
+      endpoint: `${utils.getLambdaEndpoint()}:${constants.DEFAULT_LABMDA_PORT}`, // TODO accept port as parameter
+      region: AWS_REGION,
+      credentials: new AWS.Credentials({
+        accessKeyId: 'dummy',
+        secretAccessKey: 'dummy'
+      })
+    })
+    // Call without functionName in parameter so it does not save
+    const result = await lambdaClient.invoke({
+      FunctionName: constants.LAMBDA_NAME
+    }).promise()
+    // TODO warm lambda
   }
 
   async run (callStubs, stepFunctionDefinition, stepFunctionInput, options = {
@@ -156,7 +170,6 @@ main()
     console.log(result)
     process.exit(0)
   }, function (err) {
-    console.error('-------')
     console.error(err)
     process.exit(1)
   })
