@@ -1,4 +1,3 @@
-module.exports = TestRunner
 
 const dockerCompose = require('docker-compose')
 const dockerComposeFile = require('./lib/docker-compose-file')
@@ -179,3 +178,5 @@ async function setUpStepFunctions () {
     endpoint: `http://localhost:${constants.DEFAULT_STEP_FUNCTIONS_PORT}`
   }
 }
+
+module.exports = TestRunner
