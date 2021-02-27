@@ -8,8 +8,8 @@ const constants = require('./lib/constants')
 const utils = require('./lib/utils')
 const AWS = require('aws-sdk')
 const AWS_REGION = 'eu-west-1'
+const crypto = require('crypto')
 const STEP_FUNCTION_NAME = 'testStepFunction'
-const STEP_FUNCTION_ARN = `arn:aws:states:us-east-1:123456789012:stateMachine:${STEP_FUNCTION_NAME}`
 
 class TestRunner {
   async setUp (options) {
@@ -58,6 +58,9 @@ class TestRunner {
     }).promise()
   }
 
+  getStepFunctionArn () {
+    return `arn:aws:states:us-east-1:123456789012:stateMachine:${this.stepFunctionName}`
+  }
   async run (callStubs, stepFunctionDefinition, stepFunctionInput, options = {
     executionTimeout: constants.DEFAULT_EXECUTION_TIMEOUT, executionInterval: constants.DEFAULT_EXECUTION_INTERVAL
   }) {
@@ -73,14 +76,16 @@ class TestRunner {
 
     console.log(fixedDefinition)
 
+    // Deletion takes long time, better to create random names and let the step function be deleted at its time
+    this.stepFunctionName = `${STEP_FUNCTION_NAME}-${crypto.randomBytes(5).toString('hex')}`
     await stepFunctionClient.createStateMachine({
       definition: JSON.stringify(fixedDefinition),
-      name: STEP_FUNCTION_NAME,
+      name: this.stepFunctionName,
       roleArn: 'arn:aws:iam::012345678901:role/DummyRole'
     }).promise()
 
     const execution = await stepFunctionClient.startExecution({
-      stateMachineArn: STEP_FUNCTION_ARN,
+      stateMachineArn: this.getStepFunctionArn(),
       name: new Date().getTime().toString(),
       input: JSON.stringify(stepFunctionInput)
     }).promise()
@@ -149,11 +154,11 @@ class TestRunner {
       await del(key)
     }
 
-    const { executions } = await this.stepFunctionClient.listExecutions({ stateMachineArn: STEP_FUNCTION_ARN }).promise()
+    const { executions } = await this.stepFunctionClient.listExecutions({ stateMachineArn: this.getStepFunctionArn() }).promise()
     for (const execution of executions) {
       await this.stepFunctionClient.stopExecution({ executionArn: execution.executionArn }).promise()
     }
-    await this.stepFunctionClient.deleteStateMachine({ stateMachineArn: STEP_FUNCTION_ARN }).promise()
+    await this.stepFunctionClient.deleteStateMachine({ stateMachineArn: this.getStepFunctionArn() }).promise()
   }
 
   async tearDown () {
