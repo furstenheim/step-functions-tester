@@ -1,6 +1,4 @@
-module.exports = {
-
-}
+module.exports = TestRunner
 
 const dockerCompose = require('docker-compose')
 const dockerComposeFile = require('./lib/docker-compose-file')
@@ -56,10 +54,9 @@ class TestRunner {
       })
     })
     // Call without functionName in parameter so it does not save
-    const result = await lambdaClient.invoke({
+    await lambdaClient.invoke({
       FunctionName: constants.LAMBDA_NAME
     }).promise()
-    // TODO warm lambda
   }
 
   async run (callStubs, stepFunctionDefinition, stepFunctionInput, options = {
@@ -163,60 +160,6 @@ class TestRunner {
   async tearDown () {
     // TODO close docker and sam
   }
-}
-
-main()
-  .then(function (result) {
-    console.log(result)
-    process.exit(0)
-  }, function (err) {
-    console.error(err)
-    process.exit(1)
-  })
-
-async function main () {
-  const testRunner = new TestRunner()
-  await testRunner.setUp()
-  const result = await testRunner.run(
-    {
-      MyFirstLambda: [{count: 3}]
-    }, {
-      StartAt: 'FirstStep',
-      States: {
-        FirstStep: {
-          Type: 'Task',
-          Resource: 'MyFirstLambda',
-          ResultPath: '$.firstResult',
-          Next: 'SecondStep',
-          TimeoutSeconds: 10
-        },
-        SecondStep: {
-          Type: 'Choice',
-          Choices: [
-            {
-              Variable: '$.firstResult.count',
-              NumericGreaterThan: 4,
-              Next: 'Final'
-            },
-            {
-              Variable: '$.firstResult.count',
-              NumericLessThanEquals: 4,
-              Next: 'Final'
-            }
-          ]
-        },
-        Final: {
-          Type: 'Task',
-          Resource: 'FinalLambda',
-          Parameters: {
-            'SomeEndParameters.$': '$.firstResult.count'
-          },
-          End: true
-        }
-      }
-    }, {})
-  await testRunner.cleanUp()
-  console.log(JSON.stringify(result, null, 2))
 }
 
 /**
