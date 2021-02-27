@@ -12,9 +12,9 @@ const STEP_FUNCTION_NAME = 'testStepFunction'
 const STEP_FUNCTION_ARN = `arn:aws:states:us-east-1:123456789012:stateMachine:${STEP_FUNCTION_NAME}`
 
 class TestRunner {
-  async setUp () {
+  async setUp (options) {
     await sam.runSam()
-    const { endpoint: stepFunctionEndpoint } = await setUpStepFunctions()
+    const { endpoint: stepFunctionEndpoint } = await setUpStepFunctions(options)
 
     this.stepFunctionClient = new AWS.StepFunctions({
       endpoint: stepFunctionEndpoint,
@@ -165,8 +165,8 @@ class TestRunner {
  *
  * @returns {Promise<{endpoint: number}>}
  */
-async function setUpStepFunctions () {
-  const dockerComposeConfig = dockerComposeFile({})
+async function setUpStepFunctions (options) {
+  const dockerComposeConfig = dockerComposeFile(options)
   const dockerResult = await dockerCompose.upAll({
     configAsString: dockerComposeConfig,
     composeOptions: [['--verbose']]
