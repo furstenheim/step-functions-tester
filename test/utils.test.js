@@ -115,11 +115,12 @@ describe('Fix step function', function () {
           FirstStep: {
             Next: 'SecondStep',
             Parameters: {
-              __function_key: 'MyFirstLambda'
+              __function_key: 'MyFirstLambda',
+              'input.$': '$'
             },
-            Resource: 'MockFunction',
+            Resource: 'arn:aws:lambda:us-east-1:123456789012:function:MockFunction',
             ResultPath: '$.firstResult',
-            TimeoutSeconds: 5,
+            TimeoutSeconds: 10,
             Type: 'Task'
           },
           SecondStep: {
@@ -140,10 +141,12 @@ describe('Fix step function', function () {
           Final: {
             End: true,
             Parameters: {
-              SomeEndParameters: '$.firstResult.count',
+              input: {
+                SomeEndParameters: '$.firstResult.count'
+              },
               __function_key: 'FinalLambda'
             },
-            Resource: 'MockFunction',
+            Resource: 'arn:aws:lambda:us-east-1:123456789012:function:MockFunction',
             Type: 'Task'
           }
         }
