@@ -13,7 +13,9 @@ const STEP_FUNCTION_NAME = 'testStepFunction'
 
 class TestRunner {
   async setUp (options) {
-    await sam.runSam()
+    this.options = options
+    const {stop: stopSam} = await sam.runSam()
+    this.stopSam = stopSam
     const { endpoint: stepFunctionEndpoint } = await setUpStepFunctions(options)
 
     this.stepFunctionClient = new AWS.StepFunctions({
@@ -61,6 +63,7 @@ class TestRunner {
   getStepFunctionArn () {
     return `arn:aws:states:us-east-1:123456789012:stateMachine:${this.stepFunctionName}`
   }
+
   async run (callStubs, stepFunctionDefinition, stepFunctionInput, options = {
     executionTimeout: constants.DEFAULT_EXECUTION_TIMEOUT, executionInterval: constants.DEFAULT_EXECUTION_INTERVAL
   }) {
@@ -94,7 +97,7 @@ class TestRunner {
     let executionError = null
     setTimeout(function () {
       stillRunning = false
-      executionError = new Error('Step function not finished withing requested timeout')
+      executionError = new Error('Step function not finished within requested timeout')
     }, executionTimeout)
 
     let stepFunctionResult
@@ -162,7 +165,14 @@ class TestRunner {
   }
 
   async tearDown () {
-    // TODO close docker and sam
+    await this.stopSam()
+/*    const dockerComposeConfig = dockerComposeFile.getConfiguration(this.options)
+
+    await dockerCompose.stop({
+      composeOptions: [[dockerComposeFile.getRedisService(), dockerComposeFile.getStepFunctionsService()]]
+    })
+    await this.removeDocker()*/
+    // TODO close sam
   }
 }
 
@@ -171,7 +181,7 @@ class TestRunner {
  * @returns {Promise<{endpoint: number}>}
  */
 async function setUpStepFunctions (options) {
-  const dockerComposeConfig = dockerComposeFile(options)
+  const dockerComposeConfig = dockerComposeFile.getConfiguration(options)
   const dockerResult = await dockerCompose.upAll({
     configAsString: dockerComposeConfig,
     composeOptions: [['--verbose']]

@@ -1,6 +1,6 @@
 /* globals describe it */
-const mapValuesDeep = require('../../lib/utils').mapValuesDeep
-const fixStepFunction = require('../../lib/utils').fixStepFunction
+const mapValuesDeep = require('../lib/utils').mapValuesDeep
+const fixStepFunction = require('../lib/utils').fixStepFunction
 const _ = require('lodash')
 const { expect } = require('chai')
 describe('Map Values Deep', function () {

@@ -1,10 +1,11 @@
 {
-  "name": "step-functions-swiss-army-knife",
+  "name": "step-functions-tester",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test:watch": "mocha --recursive test --watch"
+    "test:watch": "mocha --recursive test --watch",
+    "test": "mocha --recursive test"
   },
   "dependencies": {
     "aws-sdk": "^2.848.0",
