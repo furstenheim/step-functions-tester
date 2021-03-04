@@ -11,7 +11,7 @@ const crypto = require('crypto')
 const STEP_FUNCTION_NAME = 'testStepFunction'
 const debug = require('debug')('step-functions-tester')
 class TestRunner {
-  async setUp (options) {
+  async setUp (options = {}) {
     this.options = options
     const {stop: stopSam} = await sam.runSam()
     this.stopSam = stopSam

@@ -28,7 +28,7 @@ type Result = {
 
 
 export default class TestRunner {
-  setUp (options: SetUpOptions): Promise<void>
+  setUp (options?: SetUpOptions): Promise<void>
   run(callStubs: CallStubs, stepFunctionDefinition: any, stepFunctionInput: any, options?: RunOptions): Promise<Result>
   cleanUp(): Promise<void>
   tearDown(): Promise<void>

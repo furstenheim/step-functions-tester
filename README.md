@@ -1,6 +1,8 @@
 # step-functions-tester
 
-Write unit tests for your aws step functions.
+Write unit tests for your [aws step functions](https://aws.amazon.com/step-functions/?step-functions.sort-by=item.additionalFields.postDateTime&step-functions.sort-order=desc).
+
+![step-function-sample](./step-function-sample.png)
 
 ## Installation
 
