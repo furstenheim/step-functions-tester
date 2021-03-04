@@ -18,9 +18,7 @@ describe('Step function tester', function () {
   const tests = getTests()
   tests.forEach(function ({ name, only, callStubs, stepFunctionDefinition, stepFunctionInput, executions: expectedExecutions }) {
     ;(only ? it.only : it)(name, async function () {
-      console.log('running')
       const { executions } = await testRunner.run(callStubs, stepFunctionDefinition, stepFunctionInput)
-      console.log(JSON.stringify(executions))
       expect(executions).deep.equal(expectedExecutions)
     })
   })

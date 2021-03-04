@@ -92,7 +92,7 @@ class TestRunner {
 
     let stillRunning = true
     let executionError = null
-    setTimeout(function () {
+    const timeout = setTimeout(function () {
       stillRunning = false
       executionError = new Error('Step function not finished within requested timeout')
     }, executionTimeout)
@@ -110,6 +110,8 @@ class TestRunner {
     if (executionError !== null) {
       throw executionError
     }
+
+    clearInterval(timeout)
 
     const executionHistory = await stepFunctionClient.getExecutionHistory({ executionArn: execution.executionArn }).promise()
 
@@ -145,13 +147,14 @@ class TestRunner {
   }
 
   async tearDown () {
+    this.redisClient.end(false)
     await this.stopSam()
-/*    const dockerComposeConfig = dockerComposeFile.getConfiguration(this.options)
+   const dockerComposeConfig = dockerComposeFile.getConfiguration(this.options)
 
-    await dockerCompose.stop({
-      composeOptions: [[dockerComposeFile.getRedisService(), dockerComposeFile.getStepFunctionsService()]]
+    await dockerCompose.down({
+      configAsString: dockerComposeConfig,
+      composeOptions: [['--verbose']]
     })
-    await this.removeDocker()*/
   }
 }
 
@@ -161,10 +164,16 @@ class TestRunner {
  */
 async function setUpStepFunctions (options) {
   const dockerComposeConfig = dockerComposeFile.getConfiguration(options)
-  const dockerResult = await dockerCompose.upAll({
-    configAsString: dockerComposeConfig,
-    composeOptions: [['--verbose']]
-  })
+  let dockerResult
+  try {
+    dockerResult = await dockerCompose.upAll({
+      configAsString: dockerComposeConfig,
+      composeOptions: [['--verbose']]
+    })
+  } catch (e) {
+    console.error('Error setting up', e)
+    throw e
+  }
 
   debug(dockerResult)
   // TODO accept endpoint as parameter
