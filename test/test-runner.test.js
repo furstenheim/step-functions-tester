@@ -16,8 +16,8 @@ describe('Step function tester', function () {
   })
 
   const tests = getTests()
-  tests.forEach(function ({ name, callStubs, stepFunctionDefinition, stepFunctionInput, executions: expectedExecutions }) {
-    it(name, async function () {
+  tests.forEach(function ({ name, only, callStubs, stepFunctionDefinition, stepFunctionInput, executions: expectedExecutions }) {
+    ;(only ? it.only : it)(name, async function () {
       console.log('running')
       const { executions } = await testRunner.run(callStubs, stepFunctionDefinition, stepFunctionInput)
       console.log(JSON.stringify(executions))
@@ -69,18 +69,14 @@ describe('Step function tester', function () {
         stepFunctionInput: {},
         executions: [
           {
-            execution: [
-              {
-                SomeEndParameters: 3
-              }
-            ],
-            functionName: 'FinalLambda'
+            payload: {},
+            functionName: 'MyFirstLambda'
           },
           {
-            execution: [
-              {}
-            ],
-            functionName: 'MyFirstLambda'
+            payload: {
+              SomeEndParameters: 3
+            },
+            functionName: 'FinalLambda'
           }
         ]
       },
@@ -162,21 +158,26 @@ describe('Step function tester', function () {
         },
         executions: [{
           functionName: 'SomeLambda',
-          execution: [
-            { iterator: { count: 3, index: 0, step: 1 } },
-            {
-              iterator: {
-                step: 1,
-                index: 1,
-                count: 3,
-                continue: true
-              },
-              result: { result: 'first' }
+          payload: { iterator: { count: 3, index: 0, step: 1 } }
+        },
+        {
+          functionName: 'IteratedLambda',
+          payload: { iterator: { step: 1, index: 1, count: 3, continue: true } }
+        },
+        {
+          functionName: 'SomeLambda',
+          payload: {
+            iterator: {
+              step: 1,
+              index: 1,
+              count: 3,
+              continue: true
             },
-            { iterator: { step: 2, index: 1, count: 3, continue: true }, result: { result: 'second' } }]
+            result: { result: 'first' }
+          }
         }, {
           functionName: 'IteratedLambda',
-          execution: [{ iterator: { step: 1, index: 1, count: 3, continue: true } }, {
+          payload: {
             iterator: {
               step: 2,
               index: 1,
@@ -184,7 +185,11 @@ describe('Step function tester', function () {
               continue: true
             },
             result: { result: 'first' }
-          }]
+          }
+        }, {
+          functionName: 'SomeLambda',
+          payload:
+              { iterator: { step: 2, index: 1, count: 3, continue: true }, result: { result: 'second' } }
         }]
       },
       {
@@ -217,22 +222,21 @@ describe('Step function tester', function () {
           another: 'false'
         },
         executions: [
+
           {
-            execution: [
-              {
-                SomeEndParameters: 3
-              }
-            ],
-            functionName: 'FinalLambda'
-          },
-          {
-            execution: [
+            payload:
               {
                 some: 'true',
                 another: 'false'
-              }
-            ],
+              },
             functionName: 'MyFirstLambda'
+          },
+          {
+            payload:
+              {
+                SomeEndParameters: 3
+              },
+            functionName: 'FinalLambda'
           }
         ]
       }

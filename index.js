@@ -1,4 +1,3 @@
-
 const dockerCompose = require('docker-compose')
 const dockerComposeFile = require('./lib/docker-compose-file')
 const sam = require('./lib/sam')
@@ -10,7 +9,7 @@ const AWS = require('aws-sdk')
 const AWS_REGION = 'eu-west-1'
 const crypto = require('crypto')
 const STEP_FUNCTION_NAME = 'testStepFunction'
-
+const debug = require('debug')('step-functions-tester')
 class TestRunner {
   async setUp (options) {
     this.options = options
@@ -77,8 +76,6 @@ class TestRunner {
     }
     const fixedDefinition = utils.fixStepFunction(stepFunctionDefinition)
 
-    console.log(fixedDefinition)
-
     // Deletion takes long time, better to create random names and let the step function be deleted at its time
     this.stepFunctionName = `${STEP_FUNCTION_NAME}-${crypto.randomBytes(5).toString('hex')}`
     await stepFunctionClient.createStateMachine({
@@ -116,24 +113,7 @@ class TestRunner {
 
     const executionHistory = await stepFunctionClient.getExecutionHistory({ executionArn: execution.executionArn }).promise()
 
-    const redisClient = this.redisClient
-    const executionKeys = await new Promise(function (resolve, reject) {
-      redisClient.keys('executions:*', function (err, keys) {
-        if (err) {
-          return reject(err)
-        }
-        resolve(keys)
-      })
-    })
-    const redisGet = this.redisGet
-    const executions = await Promise.all(executionKeys.map(async function (key) {
-      const execution = await redisGet(key)
-      const functionName = key.substr('executions:'.length)
-      return {
-        functionName,
-        execution
-      }
-    }))
+    const executions = await this.redisGet('executions')
 
     return {
       executions,
@@ -172,7 +152,6 @@ class TestRunner {
       composeOptions: [[dockerComposeFile.getRedisService(), dockerComposeFile.getStepFunctionsService()]]
     })
     await this.removeDocker()*/
-    // TODO close sam
   }
 }
 
@@ -187,7 +166,7 @@ async function setUpStepFunctions (options) {
     composeOptions: [['--verbose']]
   })
 
-  console.log(dockerResult)
+  debug(dockerResult)
   // TODO accept endpoint as parameter
   return {
     endpoint: `http://localhost:${constants.DEFAULT_STEP_FUNCTIONS_PORT}`
