@@ -7,7 +7,7 @@ Write unit tests for your [aws step functions](https://aws.amazon.com/step-funct
 ## Installation
 
 ```
-step-functions-tester
+yarn add step-functions-tester
 ```
 
 ## Usage
