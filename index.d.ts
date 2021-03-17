@@ -12,8 +12,16 @@ interface RunOptions {
   executionInterval?: number
 }
 
+interface CallStub {
+  result?: any
+  exception?: CallStubException
+}
+interface CallStubException {
+  type: string
+  message: string
+}
 interface CallStubs {
-  [functionName: string]: Array<object>
+  [functionName: string]: Array<CallStub>
 }
 type Execution = {
   functionName: string

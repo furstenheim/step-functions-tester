@@ -38,7 +38,7 @@ describe('Step function tester', function () {
     const stepFunctionInput = {}
 
     // Keys are function names in the step function definition, values are arrays of calls
-    const callStubs = {'arn:eu-west:111:mockLambda': [{result: 'First call result'}, {result: 'Second call result'}], /*... */}
+    const callStubs = {'arn:eu-west:111:mockLambda': [{result: 'First call result'}, {result: 'Second call result'}], 'arn:eu-west:111:mockLambda2': [{exception: {type: 'MyError', message: 'Some exception'}}]/*... */}
     
     const { executions } = await testRunner.run(callStubs, stepFunctionDefinition, stepFunctionInput)
     expect(executions).deep.equal(expectedExecutions)

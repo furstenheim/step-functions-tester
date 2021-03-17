@@ -18,7 +18,8 @@ describe('Step function tester', function () {
   const tests = getTests()
   tests.forEach(function ({ name, only, callStubs, stepFunctionDefinition, stepFunctionInput, executions: expectedExecutions }) {
     ;(only ? it.only : it)(name, async function () {
-      const { executions } = await testRunner.run(callStubs, stepFunctionDefinition, stepFunctionInput)
+      const { executions,  stepFunctionExecution, stepFunctionHistory} = await testRunner.run(callStubs, stepFunctionDefinition, stepFunctionInput)
+      expect(stepFunctionExecution.status).equals('SUCCEEDED')
       expect(executions).deep.equal(expectedExecutions)
     })
   })
@@ -27,7 +28,8 @@ describe('Step function tester', function () {
       {
         name: 'Test with parameters',
         callStubs: {
-          MyFirstLambda: [{ count: 3 }]
+          MyFirstLambda: [{result: {count: 3}}],
+          FinalLambda: [{result: {}}]
         },
         stepFunctionDefinition: {
           StartAt: 'FirstStep',
@@ -125,32 +127,44 @@ describe('Step function tester', function () {
         stepFunctionInput: {},
         callStubs: {
           SomeLambda: [{
-            step: 1,
-            index: 1,
-            count: 3,
-            continue: true
+            result: {
+              step: 1,
+              index: 1,
+              count: 3,
+              continue: true
+            }
           },
-          {
-            step: 2,
-            index: 1,
-            count: 3,
-            continue: true
-          },
-          {
-            step: 3,
-            index: 1,
-            count: 3,
-            continue: false
-          }],
+            {
+              result: {
+                step: 2,
+                index: 1,
+                count: 3,
+                continue: true
+              }
+            },
+            {
+              result: {
+                step: 3,
+                index: 1,
+                count: 3,
+                continue: false
+              }
+            }],
           IteratedLambda: [
             {
-              result: 'first'
+              result: {
+                result: 'first'
+              }
             },
             {
-              result: 'second'
+              result: {
+                result: 'second'
+              }
             },
             {
-              result: 'third'
+              result: {
+                result: 'third'
+              }
             }
           ]
         },
@@ -193,7 +207,8 @@ describe('Step function tester', function () {
       {
         name: 'Accept step function input',
         callStubs: {
-          MyFirstLambda: [{ count: 3 }]
+          MyFirstLambda: [{result: { count: 3 }}],
+          FinalLambda: [{}]
         },
         stepFunctionDefinition: {
           StartAt: 'FirstStep',
@@ -235,6 +250,90 @@ describe('Step function tester', function () {
                 SomeEndParameters: 3
               },
             functionName: 'FinalLambda'
+          }
+        ]
+      },
+      {
+        name: 'Error handling',
+        callStubs: {
+          MyFirstLambda: [{exception: {
+            type: 'MyError',
+            message: 'Some exception'}}],
+          FinalLambda1: [
+            {
+              result: {}
+            }
+          ]
+        },
+        stepFunctionDefinition: {
+          StartAt: 'FirstStep',
+          States: {
+            FirstStep: {
+              Type: 'Task',
+              Resource: 'MyFirstLambda',
+              ResultPath: '$.firstResult',
+              Next: 'Final',
+              TimeoutSeconds: 10,
+              Catch: [
+                {
+                  ErrorEquals: ['MyError'],
+                  ResultPath: '$.error-info',
+                  Next: 'Final1'
+                },
+                {
+                  ErrorEquals: ['States.All'],
+                  Next: 'Final2'
+                }
+              ],
+            },
+            Final1: {
+              Type: 'Task',
+              Resource: 'FinalLambda1',
+              Parameters: {
+                'SomeEndParameters.$': '$.error-info'
+              },
+              End: true
+            },
+            Final2: {
+              Type: 'Task',
+              Resource: 'FinalLambda2',
+              Parameters: {
+                'SomeEndParameters.$': '$.error-info'
+              },
+              End: true
+            },
+            Final: {
+              Type: 'Task',
+              Resource: 'FinalLambda',
+              Parameters: {
+                'SomeEndParameters.$': '$.error-info'
+              },
+              End: true
+            }
+          }
+        },
+        stepFunctionInput: {
+          some: 'true',
+          another: 'false'
+        },
+        executions: [
+          {
+            payload:
+              {
+                some: 'true',
+                another: 'false'
+              },
+            functionName: 'MyFirstLambda'
+          },
+          {
+            payload:
+              {
+                SomeEndParameters: {
+                  Cause: '{"errorType":"MyError","errorMessage":"Some exception"}',
+                  Error: 'MyError'
+                }
+              },
+            functionName: 'FinalLambda1'
           }
         ]
       }
