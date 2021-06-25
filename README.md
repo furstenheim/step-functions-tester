@@ -81,7 +81,7 @@ pip3 install 'aws-sam-cli==1.12'
 ```
 
 * Docker
-* Docker-compose
+* Docker-compose. version 1.25.4 newer versions might not work
 
 
 
