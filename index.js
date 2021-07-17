@@ -75,7 +75,7 @@ class TestRunner {
     try {
       const result = this.doRun(callStubs, stepFunctionDefinition, stepFunctionInput, options)
 
-      if ((await result).stepFunctionExecution.status === 'FAILED' && JSON.stringify(result.executions).includes('Failed to get next!')) {
+      if ((await result).stepFunctionExecution.status === 'FAILED' && result.executions && JSON.stringify(result.executions).includes('Failed to get next!')) {
         // https://github.com/awslabs/aws-lambda-cpp/issues/26
         debug('Internal lambda error, retrying')
         // Clean up and retry
