@@ -3,7 +3,7 @@ const TestRunner = require('../index')
 const { expect } = require('chai')
 let testRunner
 describe('Step function tester', function () {
-  this.timeout('30s')
+  this.timeout('60s')
   before('Set up test runner', async function () {
     testRunner = new TestRunner()
     await testRunner.setUp({ defaultSubnet: '240.13.2.0' })
@@ -18,7 +18,7 @@ describe('Step function tester', function () {
   const tests = getTests()
   tests.forEach(function ({ name, only, callStubs, stepFunctionDefinition, stepFunctionInput, executions: expectedExecutions }) {
     ;(only ? it.only : it)(name, async function () {
-      const { executions,  stepFunctionExecution, stepFunctionHistory} = await testRunner.run(callStubs, stepFunctionDefinition, stepFunctionInput)
+      const { executions, stepFunctionExecution, stepFunctionHistory } = await testRunner.run(callStubs, stepFunctionDefinition, stepFunctionInput)
       expect(stepFunctionExecution.status).equals('SUCCEEDED')
       expect(executions).deep.equal(expectedExecutions)
     })
@@ -28,8 +28,8 @@ describe('Step function tester', function () {
       {
         name: 'Test with parameters',
         callStubs: {
-          MyFirstLambda: [{result: {count: 3}}],
-          FinalLambda: [{result: {}}]
+          MyFirstLambda: [{ result: { count: 3 } }],
+          FinalLambda: [{ result: {} }]
         },
         stepFunctionDefinition: {
           StartAt: 'FirstStep',
@@ -134,22 +134,22 @@ describe('Step function tester', function () {
               continue: true
             }
           },
-            {
-              result: {
-                step: 2,
-                index: 1,
-                count: 3,
-                continue: true
-              }
-            },
-            {
-              result: {
-                step: 3,
-                index: 1,
-                count: 3,
-                continue: false
-              }
-            }],
+          {
+            result: {
+              step: 2,
+              index: 1,
+              count: 3,
+              continue: true
+            }
+          },
+          {
+            result: {
+              step: 3,
+              index: 1,
+              count: 3,
+              continue: false
+            }
+          }],
           IteratedLambda: [
             {
               result: {
@@ -207,7 +207,7 @@ describe('Step function tester', function () {
       {
         name: 'Accept step function input',
         callStubs: {
-          MyFirstLambda: [{result: { count: 3 }}],
+          MyFirstLambda: [{ result: { count: 3 } }],
           FinalLambda: [{}]
         },
         stepFunctionDefinition: {
@@ -256,9 +256,12 @@ describe('Step function tester', function () {
       {
         name: 'Error handling',
         callStubs: {
-          MyFirstLambda: [{exception: {
-            type: 'MyError',
-            message: 'Some exception'}}],
+          MyFirstLambda: [{
+            exception: {
+              type: 'MyError',
+              message: 'Some exception'
+            }
+          }],
           FinalLambda1: [
             {
               result: {}
@@ -284,7 +287,7 @@ describe('Step function tester', function () {
                   ErrorEquals: ['States.All'],
                   Next: 'Final2'
                 }
-              ],
+              ]
             },
             Final1: {
               Type: 'Task',
@@ -329,13 +332,39 @@ describe('Step function tester', function () {
             payload:
               {
                 SomeEndParameters: {
-                  Cause: '{"errorType":"MyError","errorMessage":"Some exception"}',
+                  Cause: '{"errorType":"MyError","errorMessage":"Some exception","trace":["Error","    at Runtime.exports.lambdaHandler [as handler] (/var/task/app.js:42:29)","    at processTicksAndRejections (internal/process/task_queues.js:97:5)"]}',
+
                   Error: 'MyError'
                 }
               },
             functionName: 'FinalLambda1'
           }
         ]
+      },
+      {
+        name: 'Wait task',
+        callStubs: {
+        },
+        stepFunctionDefinition: {
+          StartAt: 'FirstStep',
+          States: {
+            FirstStep: {
+              Type: 'Wait',
+              Next: 'Final',
+              Seconds: 1000
+            },
+            Final: {
+              Type: 'Wait',
+              Seconds: 0,
+              End: true
+            }
+          }
+        },
+        stepFunctionInput: {
+          some: 'true',
+          another: 'false'
+        },
+        executions: null
       }
     ]
   }

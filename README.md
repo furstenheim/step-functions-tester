@@ -76,15 +76,16 @@ We save the stubs for your lambda functions in redis and return those to the cur
 ## Requirements
 
 ```
-## important newer versions do not work properly
-pip3 install 'aws-sam-cli==1.12'
+## important different versions, even patches can make the tester not run
+pip3 install 'aws-sam-cli==1.23.0'
+pip3 install docker-compose==1.25.4
 ```
 
-* Docker
-* Docker-compose. version 1.25.4 newer versions might not work
+Linux.
 
 
 
 ## Gotchas
 * No current support for parallel.
-* Current implementation is quite global and it will run docker on the host network and use default redis port. 
+* Current implementation is quite global and it will run docker on the host network and use default redis port.
+* Not currently working on Mac, PRs are welcome 
